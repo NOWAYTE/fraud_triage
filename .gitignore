@@ -1,0 +1,52 @@
+# Python bytecode and cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Build and packaging artifacts
+build/
+dist/
+.eggs/
+*.egg-info/
+
+# Testing, coverage, and type-check caches
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Streamlit local state/secrets
+.streamlit/secrets.toml
+.streamlit/cache/
+
+# IDE/editor files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs and local temp files
+*.log
+tmp_*.py
+tmp_*.txt
+
+# ML artifacts generated/downloaded locally
+models/*.joblib
+models/*.pkl
+models/*.pickle
+
+# Optional: uncomment if you don't want to version local data files
+# data/

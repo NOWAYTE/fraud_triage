@@ -1,0 +1,234 @@
+{
+  "categorical_columns": [
+    "Month",
+    "DayOfWeek",
+    "Make",
+    "AccidentArea",
+    "DayOfWeekClaimed",
+    "MonthClaimed",
+    "Sex",
+    "MaritalStatus",
+    "Fault",
+    "PolicyType",
+    "VehicleCategory",
+    "VehiclePrice",
+    "Days_Policy_Accident",
+    "Days_Policy_Claim",
+    "PastNumberOfClaims",
+    "AgeOfVehicle",
+    "AgeOfPolicyHolder",
+    "PoliceReportFiled",
+    "WitnessPresent",
+    "AgentType",
+    "NumberOfSuppliments",
+    "AddressChange_Claim",
+    "NumberOfCars",
+    "BasePolicy"
+  ],
+  "numeric_columns": [
+    "WeekOfMonth",
+    "WeekOfMonthClaimed",
+    "Age",
+    "Deductible",
+    "DriverRating",
+    "Year"
+  ],
+  "categorical_options": {
+    "Month": [
+      "Apr",
+      "Aug",
+      "Dec",
+      "Feb",
+      "Jan",
+      "Jul",
+      "Jun",
+      "Mar",
+      "May",
+      "Nov",
+      "Oct",
+      "Sep"
+    ],
+    "DayOfWeek": [
+      "Friday",
+      "Monday",
+      "Saturday",
+      "Sunday",
+      "Thursday",
+      "Tuesday",
+      "Wednesday"
+    ],
+    "Make": [
+      "Accura",
+      "BMW",
+      "Chevrolet",
+      "Dodge",
+      "Ferrari",
+      "Ford",
+      "Honda",
+      "Jaguar",
+      "Lexus",
+      "Mazda",
+      "Mecedes",
+      "Mercury",
+      "Nisson",
+      "Pontiac",
+      "Porche",
+      "Saab",
+      "Saturn",
+      "Toyota",
+      "VW"
+    ],
+    "AccidentArea": [
+      "Rural",
+      "Urban"
+    ],
+    "DayOfWeekClaimed": [
+      "0",
+      "Friday",
+      "Monday",
+      "Saturday",
+      "Sunday",
+      "Thursday",
+      "Tuesday",
+      "Wednesday"
+    ],
+    "MonthClaimed": [
+      "0",
+      "Apr",
+      "Aug",
+      "Dec",
+      "Feb",
+      "Jan",
+      "Jul",
+      "Jun",
+      "Mar",
+      "May",
+      "Nov",
+      "Oct",
+      "Sep"
+    ],
+    "Sex": [
+      "Female",
+      "Male"
+    ],
+    "MaritalStatus": [
+      "Divorced",
+      "Married",
+      "Single",
+      "Widow"
+    ],
+    "Fault": [
+      "Policy Holder",
+      "Third Party"
+    ],
+    "PolicyType": [
+      "Sedan - All Perils",
+      "Sedan - Collision",
+      "Sedan - Liability",
+      "Sport - All Perils",
+      "Sport - Collision",
+      "Sport - Liability",
+      "Utility - All Perils",
+      "Utility - Collision",
+      "Utility - Liability"
+    ],
+    "VehicleCategory": [
+      "Sedan",
+      "Sport",
+      "Utility"
+    ],
+    "VehiclePrice": [
+      "20000 to 29000",
+      "30000 to 39000",
+      "40000 to 59000",
+      "60000 to 69000",
+      "less than 20000",
+      "more than 69000"
+    ],
+    "Days_Policy_Accident": [
+      "1 to 7",
+      "15 to 30",
+      "8 to 15",
+      "more than 30",
+      "none"
+    ],
+    "Days_Policy_Claim": [
+      "15 to 30",
+      "8 to 15",
+      "more than 30",
+      "none"
+    ],
+    "PastNumberOfClaims": [
+      "1",
+      "2 to 4",
+      "more than 4",
+      "none"
+    ],
+    "AgeOfVehicle": [
+      "2 years",
+      "3 years",
+      "4 years",
+      "5 years",
+      "6 years",
+      "7 years",
+      "more than 7",
+      "new"
+    ],
+    "AgeOfPolicyHolder": [
+      "16 to 17",
+      "18 to 20",
+      "21 to 25",
+      "26 to 30",
+      "31 to 35",
+      "36 to 40",
+      "41 to 50",
+      "51 to 65",
+      "over 65"
+    ],
+    "PoliceReportFiled": [
+      "No",
+      "Yes"
+    ],
+    "WitnessPresent": [
+      "No",
+      "Yes"
+    ],
+    "AgentType": [
+      "External",
+      "Internal"
+    ],
+    "NumberOfSuppliments": [
+      "1 to 2",
+      "3 to 5",
+      "more than 5",
+      "none"
+    ],
+    "AddressChange_Claim": [
+      "1 year",
+      "2 to 3 years",
+      "4 to 8 years",
+      "no change",
+      "under 6 months"
+    ],
+    "NumberOfCars": [
+      "1 vehicle",
+      "2 vehicles",
+      "3 to 4",
+      "5 to 8",
+      "more than 8"
+    ],
+    "BasePolicy": [
+      "All Perils",
+      "Collision",
+      "Liability"
+    ]
+  },
+  "numeric_defaults": {
+    "WeekOfMonth": 3.0,
+    "WeekOfMonthClaimed": 3.0,
+    "Age": 38.0,
+    "Deductible": 400.0,
+    "DriverRating": 2.0,
+    "Year": 1995.0
+  }
+}
