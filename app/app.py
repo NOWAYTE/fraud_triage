@@ -1,188 +1,98 @@
-import json
-import joblib
-import numpy as np
-import pandas as pd
-import shap
 import streamlit as st
-import matplotlib.pyplot as plt
-from pathlib import Path
 
-st.set_page_config(page_title="AI-Assisted Insurance Fraud Triage", layout="wide")
+from common import apply_theme, compute_model_performance, load_metadata, validate_artifacts
 
-BASE_DIR = Path(__file__).resolve().parents[1]
-MODELS_DIR = BASE_DIR / "models"
-PIPELINE_PATH = MODELS_DIR / "fraud_triage_pipeline.joblib"
-METADATA_PATH = MODELS_DIR / "fraud_triage_metadata.json"
+st.set_page_config(page_title="Insurance Fraud Triage Workspace", layout="wide")
 
-
-def validate_artifacts():
-    missing = [
-        path.relative_to(BASE_DIR)
-        for path in [PIPELINE_PATH, METADATA_PATH]
-        if not path.exists()
-    ]
-    if missing:
-        missing_list = ", ".join(str(path) for path in missing)
-        st.error(
-            f"Missing model artifacts: {missing_list}. "
-            "Run training first from the project root using: "
-            "python src/train_and_save_model.py"
-        )
-        st.stop()
-
-
-def apply_sklearn_pickle_compat_shims():
-    try:
-        import sklearn.compose._column_transformer as column_transformer
-    except Exception:
-        return
-
-    if not hasattr(column_transformer, "_RemainderColsList"):
-        class _RemainderColsList(list):
-            pass
-
-        column_transformer._RemainderColsList = _RemainderColsList
-
-@st.cache_resource
-def load_pipeline():
-    try:
-        return joblib.load(PIPELINE_PATH)
-    except AttributeError as exc:
-        if "_RemainderColsList" in str(exc) or "Can't get attribute" in str(exc):
-            apply_sklearn_pickle_compat_shims()
-            try:
-                return joblib.load(PIPELINE_PATH)
-            except Exception:
-                pass
-            st.error(
-                "Model artifact is incompatible with the installed scikit-learn version. "
-                "Use the same scikit-learn version as the environment where this model was trained "
-                "(or re-export the model in a cross-version format)."
-            )
-            st.stop()
-        raise
-
-@st.cache_data
-def load_metadata():
-    with open(METADATA_PATH, "r", encoding="utf-8") as f:
-        return json.load(f)
-
+apply_theme()
 validate_artifacts()
 
-pipeline = load_pipeline()
 metadata = load_metadata()
+metrics, summary = compute_model_performance()
 
-cat_cols = metadata["categorical_columns"]
-num_cols = metadata["numeric_columns"]
-cat_options = metadata["categorical_options"]
-num_defaults = metadata["numeric_defaults"]
+st.markdown(
+    """
+    <div class="hero-panel">
+        <h1>Insurance Fraud Triage Workspace</h1>
+        <p>Decision-support dashboard for insurance analysts. Use the page navigation to assess claims,
+        inspect feature-level model drivers, review claim history, and monitor model health.</p>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
-st.title("AI-Assisted Insurance Fraud Triage Dashboard")
-st.caption("Prototype decision-support tool for insurance claim fraud screening")
+latest_assessment = st.session_state.get("latest_assessment")
 
-st.markdown("### Claim Input Form")
+metric_col_1, metric_col_2, metric_col_3, metric_col_4 = st.columns(4)
+metric_col_1.metric("Model ROC AUC", f"{metrics['roc_auc']:.3f}")
+metric_col_2.metric("Fraud Base Rate", f"{summary['fraud_rate']:.2%}")
+metric_col_3.metric("Input Features", int(summary["feature_count"]))
+metric_col_4.metric("Recent Assessment", "Available" if latest_assessment else "None")
 
-with st.form("claim_form"):
-    col1, col2 = st.columns(2)
-    input_data = {}
+st.markdown("## Workflow Overview")
 
-    with col1:
-        for col in num_cols[: len(num_cols)//2 + 1]:
-            input_data[col] = st.number_input(
-                label=col,
-                value=float(num_defaults[col]),
-                step=1.0
-            )
+left_col, right_col = st.columns([1.2, 1])
 
-        for col in cat_cols[: len(cat_cols)//2]:
-            input_data[col] = st.selectbox(
-                label=col,
-                options=cat_options[col]
-            )
+with left_col:
+    st.markdown(
+        """
+        <div class="section-card">
+            <h3>How Analysts Use This App</h3>
+            <ol>
+                <li>Complete the multi-step assessment workflow with claim, policy, and incident details.</li>
+                <li>Review risk score, risk band, and recommended action for triage.</li>
+                <li>Inspect SHAP feature impact to understand drivers of the fraud score.</li>
+                <li>Track assessed claims in the history log for follow-up analysis.</li>
+            </ol>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
-    with col2:
-        for col in num_cols[len(num_cols)//2 + 1:]:
-            input_data[col] = st.number_input(
-                label=col,
-                value=float(num_defaults[col]),
-                step=1.0
-            )
+    if latest_assessment:
+        st.markdown(
+            f"""
+            <div class="section-card">
+                <h3>Latest Assessed Claim</h3>
+                <p><strong>Claim ID:</strong> {latest_assessment['claim_id']}</p>
+                <p><strong>Risk Band:</strong> {latest_assessment['risk_band']}</p>
+                <p><strong>Fraud Probability:</strong> {latest_assessment['fraud_probability']:.2%}</p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
-        for col in cat_cols[len(cat_cols)//2:]:
-            input_data[col] = st.selectbox(
-                label=col,
-                options=cat_options[col]
-            )
+with right_col:
+    st.markdown(
+        """
+        <div class="section-card">
+            <h3>Page Map</h3>
+            <p><strong>Fraud Risk Assessment:</strong> Multi-step input and scoring workflow.</p>
+            <p><strong>Explanation And Insights:</strong> SHAP impact and model reasoning view.</p>
+            <p><strong>Claim History Logs:</strong> Historical triage records and quick filtering.</p>
+            <p><strong>Model Information:</strong> Model metadata and validation metrics.</p>
+            <p class="small-note">Tip: Use the Streamlit sidebar navigation to move between pages.</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
-    submitted = st.form_submit_button("Assess Fraud Risk")
+if hasattr(st, "page_link"):
+    st.markdown("## Quick Actions")
+    action_col_1, action_col_2 = st.columns(2)
+    with action_col_1:
+        st.page_link("pages/1_Fraud_Risk_Assessment.py", label="Open Fraud Risk Assessment")
+        st.page_link("pages/2_Explanation_Insights.py", label="Open Explanation And Insights")
+    with action_col_2:
+        st.page_link("pages/3_Claim_History_Logs.py", label="Open Claim History Logs")
+        st.page_link("pages/4_Model_Information.py", label="Open Model Information")
 
-def get_risk_band(prob):
-    if prob < 0.30:
-        return "Low"
-    elif prob < 0.70:
-        return "Medium"
-    return "High"
-
-def get_recommendation(prob):
-    if prob < 0.30:
-        return "Proceed with standard processing."
-    elif prob < 0.70:
-        return "Send for manual review."
-    return "Escalate for priority fraud investigation."
-
-if submitted:
-    input_df = pd.DataFrame([input_data])
-
-    fraud_prob = pipeline.predict_proba(input_df)[0, 1]
-    pred_class = pipeline.predict(input_df)[0]
-    risk_band = get_risk_band(fraud_prob)
-    recommendation = get_recommendation(fraud_prob)
-
-    st.markdown("## Assessment Result")
-
-    c1, c2, c3 = st.columns(3)
-    c1.metric("Fraud Probability", f"{fraud_prob:.2%}")
-    c2.metric("Predicted Class", "Fraud" if pred_class == 1 else "Not Fraud")
-    c3.metric("Risk Band", risk_band)
-
-    if risk_band == "High":
-        st.error(f"Recommended Action: {recommendation}")
-    elif risk_band == "Medium":
-        st.warning(f"Recommended Action: {recommendation}")
-    else:
-        st.success(f"Recommended Action: {recommendation}")
-
-    st.markdown("## SHAP-Based Explanation")
-
-    preprocess = pipeline.named_steps["preprocess"]
-    model = pipeline.named_steps["model"]
-
-    transformed = preprocess.transform(input_df)
-
-    ohe = preprocess.named_transformers_["cat"].named_steps["onehot"]
-    feature_names = np.concatenate([
-        num_cols,
-        ohe.get_feature_names_out(cat_cols)
-    ])
-
-    transformed_df = pd.DataFrame(transformed, columns=feature_names)
-
-    explainer = shap.TreeExplainer(model)
-    shap_values = explainer.shap_values(transformed_df)
-
-    
-    shap_series = pd.Series(shap_values[0], index=feature_names)
-    top_contrib = shap_series.abs().sort_values(ascending=False).head(10)
-
-    st.markdown("### Top Contributing Factors")
-    contrib_df = pd.DataFrame({
-        "Feature": top_contrib.index,
-        "Impact": shap_series[top_contrib.index].values
-    })
-    st.dataframe(contrib_df, use_container_width=True)
-
-    fig, ax = plt.subplots(figsize=(8, 5))
-    top_contrib.sort_values().plot(kind="barh", ax=ax)
-    ax.set_title("Top 10 SHAP Contributions")
-    ax.set_xlabel("Absolute SHAP Impact")
-    st.pyplot(fig)
+st.markdown(
+    f"""
+    <div class="small-note">
+        Data records available for monitoring: {int(summary['record_count'])}.<br>
+        Categorical fields: {len(metadata['categorical_columns'])}. Numeric fields: {len(metadata['numeric_columns'])}.
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
