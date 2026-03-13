@@ -64,6 +64,15 @@ NUMERIC_BOUNDS = {
 }
 
 
+CLAIM_DATE_FIELDS = {"MonthClaimed", "DayOfWeekClaimed"}
+PLACEHOLDER_CATEGORICAL_VALUES = {"", "0", "0.0", "na", "n/a", "none", "null", "nan"}
+
+
+def is_placeholder_categorical_value(value: object) -> bool:
+    normalized = str(value).strip().lower()
+    return normalized in PLACEHOLDER_CATEGORICAL_VALUES
+
+
 def trigger_rerun() -> None:
     if hasattr(st, "rerun"):
         st.rerun()
@@ -263,6 +272,13 @@ def initialize_form_state(metadata: Dict[str, object]) -> None:
         key = f"field_{column}"
         options = metadata["categorical_options"][column]
         default_value = options[0] if options else ""
+        if column in CLAIM_DATE_FIELDS and options:
+            non_placeholder_options = [
+                option for option in options
+                if not is_placeholder_categorical_value(option)
+            ]
+            if non_placeholder_options:
+                default_value = non_placeholder_options[0]
         if key not in st.session_state:
             st.session_state[key] = default_value
 
@@ -329,6 +345,13 @@ def render_input_fields(fields: List[str], metadata: Dict[str, object], columns:
                 st.number_input(**widget_params)
             else:
                 options = metadata["categorical_options"][field]
+                if field in CLAIM_DATE_FIELDS:
+                    non_placeholder_options = [
+                        option for option in options
+                        if not is_placeholder_categorical_value(option)
+                    ]
+                    if non_placeholder_options:
+                        options = non_placeholder_options
                 key = f"field_{field}"
                 if st.session_state.get(key) not in options and options:
                     st.session_state[key] = options[0]
@@ -356,9 +379,9 @@ def validate_claim_data(input_data: Dict[str, object]) -> List[str]:
     if deductible < 100:
         errors.append("Deductible must be at least 100.")
 
-    claim_month = str(input_data.get("MonthClaimed", ""))
-    claim_day = str(input_data.get("DayOfWeekClaimed", ""))
-    if claim_month == "0" or claim_day == "0":
+    claim_month = input_data.get("MonthClaimed", "")
+    claim_day = input_data.get("DayOfWeekClaimed", "")
+    if is_placeholder_categorical_value(claim_month) or is_placeholder_categorical_value(claim_day):
         errors.append("Claim date fields should be set to a real month/day value.")
 
     return errors
@@ -527,6 +550,69 @@ def apply_theme() -> None:
                 color: var(--brand-ink);
             }
 
+            /* Force dark text on all main-content elements */
+            .stApp p,
+            .stApp li,
+            .stApp ol,
+            .stApp ul,
+            .stApp span,
+            .stApp label,
+            .stApp strong,
+            .stApp em,
+            .stApp td,
+            .stApp th,
+            .stApp h1,
+            .stApp h2,
+            .stApp h3,
+            .stApp h4,
+            .stApp h5,
+            .stApp h6,
+            .stMarkdown,
+            .stMarkdown *,
+            [data-testid="stMetricValue"],
+            [data-testid="stMetricLabel"],
+            [data-testid="stMetricDelta"],
+            [data-testid="stCaptionContainer"],
+            [data-testid="element-container"] label,
+            [data-testid="stWidgetLabel"] p,
+            [data-testid="stText"] {
+                color: var(--brand-ink) !important;
+            }
+
+            /* Preserve light text inside the sidebar */
+            [data-testid="stSidebar"] p,
+            [data-testid="stSidebar"] span,
+            [data-testid="stSidebar"] label,
+            [data-testid="stSidebar"] strong,
+            [data-testid="stSidebar"] h1,
+            [data-testid="stSidebar"] h2,
+            [data-testid="stSidebar"] h3,
+            [data-testid="stSidebar"] h4,
+            [data-testid="stSidebar"] .stMarkdown,
+            [data-testid="stSidebar"] .stMarkdown * {
+                color: #f8fbff !important;
+            }
+
+            /* Preserve light text inside the hero banner —
+               use explicit element selectors to match the specificity of
+               the .stApp h1 / .stApp p rules above and win via cascade order */
+            .hero-panel,
+            .hero-panel h1,
+            .hero-panel h2,
+            .hero-panel h3,
+            .hero-panel h4,
+            .hero-panel h5,
+            .hero-panel h6,
+            .hero-panel p,
+            .hero-panel span,
+            .hero-panel strong,
+            .hero-panel em,
+            .hero-panel li,
+            .hero-panel label,
+            .hero-panel div {
+                color: #f9fbfe !important;
+            }
+
             .block-container {
                 padding-top: 1.2rem;
                 padding-bottom: 2rem;
@@ -557,6 +643,11 @@ def apply_theme() -> None:
                 border: 1px solid #dbe5ee;
                 margin-bottom: 0.8rem;
                 box-shadow: 0 6px 18px rgba(15, 35, 56, 0.06);
+                color: var(--brand-ink);
+            }
+
+            .section-card * {
+                color: var(--brand-ink);
             }
 
             .step-chip {
@@ -567,6 +658,11 @@ def apply_theme() -> None:
                 font-size: 0.9rem;
                 background: #ffffff;
                 min-height: 68px;
+                color: var(--brand-ink);
+            }
+
+            .step-chip * {
+                color: var(--brand-ink);
             }
 
             .step-chip.done {
@@ -617,6 +713,11 @@ def apply_theme() -> None:
                 border: 1px solid #dbe5ee;
                 background: #f8fbff;
                 margin-top: 0.5rem;
+                color: var(--brand-ink);
+            }
+
+            .action-panel * {
+                color: var(--brand-ink);
             }
 
             .action-panel.low {
@@ -686,7 +787,7 @@ def render_shap_contributions(assessment: Dict[str, object], limit: int = 12) ->
         return
 
     shap_df = shap_df.head(limit).copy()
-    st.dataframe(shap_df[["Feature", "Impact", "AbsoluteImpact"]], use_container_width=True, hide_index=True)
+    st.dataframe(shap_df[["Feature", "Impact", "AbsoluteImpact"]], width="stretch", hide_index=True)
 
     plot_df = shap_df.iloc[::-1].copy()
     colors = ["#b0353a" if value > 0 else "#2a6f97" for value in plot_df["Impact"]]
@@ -699,5 +800,5 @@ def render_shap_contributions(assessment: Dict[str, object], limit: int = 12) ->
     ax.set_ylabel("Feature")
     fig.tight_layout()
 
-    st.pyplot(fig, use_container_width=True)
+    st.pyplot(fig, width="stretch")
     plt.close(fig)
